@@ -34,6 +34,8 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 #		echo "${LISTENIP}"
 #		echo "${ADMINEMAIL}"
 #		echo "${SERVERNAME}"
+
+#		change template using sed
 		exit 0
 
 	elif [ "${CONFIG_MENU}" == "VIRTUAL HOSTS" ]; then
