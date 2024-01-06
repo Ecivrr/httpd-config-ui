@@ -98,7 +98,7 @@ ServerAdmin _ADMINMAIL_
 # If your host doesn't have a registered DNS name, enter its IP address here.
 #
 #ServerName www.example.com:80
-#ServerName 127.0.0.1
+
 ServerName _SERVERNAME_
 
 #
