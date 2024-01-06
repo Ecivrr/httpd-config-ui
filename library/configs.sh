@@ -17,3 +17,7 @@ httpd_sed() {
         mv /tmp/httpd.conf /etc/httpd/conf/httpd.conf
     fi
 }
+vhost_sed(){
+    #vhost_template hodit do vhost.d
+    #do index.html pripsat ze je to testovaci virtualhost??
+}

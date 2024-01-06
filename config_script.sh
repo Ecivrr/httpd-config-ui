@@ -51,8 +51,12 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 			input "Add a virtual host" "Input the admins email."
 			input_data "ADMINEMAIL"
 
-			echo "${DOMAIN}"
-			echo "${ADMINEMAIL}"
+			if [ ! -e "/var/www/vhost/${DOMAIN}" ]; then
+				mkdir -p /var/www/vhost/${DOMAIN}/docroot
+				touch /var/www/vhost/${DOMAIN}/docroot/index.html
+			fi
+
+			vhost_sed
 			exit 0
 		elif [ "${VHOST_MENU}" == "REMOVE" ]; then
 			echo "remove virtual host"
