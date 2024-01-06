@@ -23,16 +23,3 @@ config_menu() {
 		"SSL/TLS" "Create your own, or add a provided certifcate." \
 		"AUTHENTICATION" "Setup user authentication and authorization."  3>&1 1>&2 2>&3)
 }
-
-input_data() {
-    local variable_name="$1"
-    DIALOGSTATUS=$?
-
-    if [ "${DIALOGSTATUS}" = 0 ]; then
-        eval "${variable_name}=${USER_INPUT}"
-    else
-        echo "ABORTING"
-        exit 0
-    fi
-}
-
