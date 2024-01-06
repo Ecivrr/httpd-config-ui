@@ -1,0 +1,28 @@
+<VirtualHost *:80>
+    ServerAdmin _ADMINEMAIL_
+    ServerName _DOMAIN_
+    ServerAlias www._DOMAIN_
+
+    DocumentRoot /var/www/vhost/_DOMAIN_/docroot
+    DirectoryIndex index.php index.html
+
+    AddDefaultCharset UTF-8
+    HostnameLookups Off
+
+    <Directory /var/www/vhost/_DOMAIN_>
+        AllowOverride none
+
+        Order allow,deny
+        Allow from 127.0.0.1
+    </Directory>
+
+    <Directory /var/www/vhost/_DOMAIN_/docroot>
+        Options -FollowSymlinks +SymlinksIfOwnerMatch
+        AllowOverride all
+
+        Order allow,deny
+        Allow from all
+    </Directory>
+
+    Redirect permanent / https://www._DOMAIN_
+</VirtualHost>

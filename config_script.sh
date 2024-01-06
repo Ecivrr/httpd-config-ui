@@ -1,6 +1,6 @@
 #!/bin/bash
 . /opt/httpd_config_ui/library/common.sh
-. /opt/httpd_config_ui/library/httpd_conf.sh
+. /opt/httpd_config_ui/library/configs.sh
 
 #HTTPD_CHECK=$(dnf list --installed | grep httpd)
 EXITSTATUS="continue"
@@ -17,6 +17,7 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 		exit 0
 	else
 		EXITSTATUS="exit"
+		echo "EXITING"
 		exit 0
 	fi
 
@@ -36,8 +37,32 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 		exit 0
 
 	elif [ "${CONFIG_MENU}" == "VIRTUAL HOSTS" ]; then
-		echo "virtual hosts"
-		exit 0
+		if [ ! -e "/etc/httpd/vhost.d" ]; then
+			mkdir "/etc/httpd/vhost.d"
+		fi
+		vhost_menu
+
+		if [ "${VHOST_MENU}" == "<-- BACK" ]; then
+			main_menu
+		elif [ "${VHOST_MENU}" == "ADD" ]; then
+			input "Add a virtual host" "Input the domain."
+			input_data "DOMAIN"
+
+			input "Add a virtual host" "Input the admins email."
+			input_data "ADMINEMAIL"
+
+			echo "${DOMAIN}"
+			echo "${ADMINEMAIL}"
+			exit 0
+		elif [ "${VHOST_MENU}" == "REMOVE" ]; then
+			echo "remove virtual host"
+			exit 0
+		else
+			EXITSTATUS="exit"
+			echo "EXITING"
+			exit 0
+		fi
+
 	elif [ "${CONFIG_MENU}" == "SSL/TLS" ]; then
 		echo "ssl/tls"
 		exit 0
@@ -46,6 +71,7 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 		exit 0
 	else
 		EXITSTATUS="exit"
+		echo "EXITING"
 		exit 0
 	fi
 done
