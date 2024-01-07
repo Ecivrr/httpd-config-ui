@@ -36,6 +36,12 @@ vhost_menu() {
 		"ADD" "Add a Virtual Host." \
 		"REMOVE" "Remove a Virtual Host." 3>&1 1>&2 2>&3)
 }
+ssl_menu() {
+	SSL_MENU=$(whiptail --title "Configure SSL" --menu "Choose an option" 25 78 16 \
+		"<-- BACK" "Return to MAIN MENU." \
+		"SELFSIGNED" "Create a selfsigned certificate." \
+		"OWN" "Add a path to your own certificate." 3>&1 1>&2 2>&3)
+}
 input_data() {
     local variable_name="$1"
     DIALOGSTATUS=$?

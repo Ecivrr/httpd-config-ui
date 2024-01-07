@@ -69,6 +69,8 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 				else
 					echo "DON'T REMOVE VIRTUAL HOST, ABORTING"
 				fi
+			else
+				echo "VIRTUAL HOST DOESN'T EXIST"
 			fi
 
 			exit 0
@@ -80,8 +82,21 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 
 	elif [ "${CONFIG_MENU}" == "SSL/TLS" ]; then
 		#nejdrive menu jestli chce vztvorit certifikat nebo jestli ma vlastni, pak pokud bude chtit vyotvorit certifikat tak se ulozi do /etc/httpd/ssl pokud chce vlastni certifakt tak zada cestu k tomu certifikatu (mohu vyzkouset ze svuj certifikat dam na random misto)
-		echo "ssl/tls"
-		exit 0
+		ssl_menu
+
+		if [ "${SSL_MENU}" == "<-- BACK" ]; then
+			main_menu
+		elif [ "${SSL_MENU}" == "SELFSIGNED" ]; then
+			echo "selfsinged"
+			exit 0
+		elif [ "${SSL_MENU}" == "OWN" ]; then
+			echo "own"
+			exit 0
+		else
+			EXITSTATUS="exit"
+			echo "EXITING"
+			exit 0
+		fi
 	elif [ "${CONFIG_MENU}" == "AUTHENTICATION" ]; then
 		echo "authentication"
 		exit 0
@@ -91,5 +106,3 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 		exit 0
 	fi
 done
-
-exit 0
