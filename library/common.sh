@@ -1,8 +1,15 @@
 #!/bin/bash
 
-yesno() {
-	whiptail --title "Welcome - This is a tool for web server configuration." --yesno "${1}" 10 78
-}
+#yesno() {
+#    local title="$1"
+#	local yesno="$2"
+#
+#    if whiptail --title "$title" --yesno "$yesno" 10 78; then
+#        echo "YES"
+#    else
+#        echo "NO"
+#    fi
+#}
 msg() {
 	whiptail --title "${1}" --msgbox "${2}" 10 78
 }

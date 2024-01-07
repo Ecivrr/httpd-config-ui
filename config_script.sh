@@ -59,7 +59,18 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 			vhost_sed
 			exit 0
 		elif [ "${VHOST_MENU}" == "REMOVE" ]; then
-			echo "remove virtual host"
+			input "Remove a virtual host" "Input the domain of the virtual host"
+			input_data "DOMAIN"
+			
+			if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
+				if whiptail --title "Remove a virtual host" --yesno "Are you sure you want to remove ${DOMAIN}?" 10 78; then
+					rm -f /etc/httpd/vhost.d/${DOMAIN}.conf*
+					rm -rf /var/www/vhost/${DOMAIN}
+				else
+					echo "DON'T REMOVE VIRTUAL HOST, ABORTING"
+				fi
+			fi
+
 			exit 0
 		else
 			EXITSTATUS="exit"
@@ -68,6 +79,7 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 		fi
 
 	elif [ "${CONFIG_MENU}" == "SSL/TLS" ]; then
+		#nejdrive menu jestli chce vztvorit certifikat nebo jestli ma vlastni, pak pokud bude chtit vyotvorit certifikat tak se ulozi do /etc/httpd/ssl pokud chce vlastni certifakt tak zada cestu k tomu certifikatu (mohu vyzkouset ze svuj certifikat dam na random misto)
 		echo "ssl/tls"
 		exit 0
 	elif [ "${CONFIG_MENU}" == "AUTHENTICATION" ]; then
