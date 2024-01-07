@@ -8,7 +8,7 @@ httpd_sed() {
         DIFF=$(diff /tmp/httpd.conf /etc/httpd/conf/httpd.conf)
         if [ "${DIFF}" ]; then
             DATE=$(date +%y%m%d%H%M%S)
-            mv /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.backup_${DATE}
+            mv /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.backup_${DATE}
             mv /tmp/httpd.conf /etc/httpd/conf/httpd.conf
         else
             rm -f /tmp/httpd.conf
@@ -18,6 +18,22 @@ httpd_sed() {
     fi
 }
 vhost_sed(){
-    #vhost_template hodit do vhost.d
-    #do index.html pripsat ze je to testovaci virtualhost??
+    cp /opt/httpd_config_ui/templates/vhost_template /tmp/${DOMAIN}.conf
+    sed -i "s/_DOMAIN_/${DOMAIN}/g" /tmp/${DOMAIN}.conf
+    sed -i "s/_ADMINEMAIL_/${ADMINEMAIL}/g" /tmp/${DOMAIN}.conf
+    #sed -i "1s/^/This is your ${DOMAIN} Virtual host\n/" /var/www/vhost/${DOMAIN}/docroot/index.html
+    echo "This is your ${DOMAIN} Virtual host" > /var/www/vhost/${DOMAIN}/docroot/index.html
+
+    if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
+        DIFF=$(diff /tmp/${DOMAIN}.conf /etc/httpd/vhost.d/${DOMAIN}.conf)
+        if [ "${DIFF}" ]; then
+            DATE=$(date +%y%m%d%H%M%S)
+            mv /etc/httpd/vhost.d/${DOMAIN}.conf /etc/httpd/vhost.d/${DOMAIN}.backup_${DATE}
+            mv /tmp/${DOMAIN}.conf /etc/httpd/vhost.d/${DOMAIN}.conf
+        else
+            rm -f /tmp/${domain.conf}
+        fi
+    else
+        mv /tmp/${DOMAIN}.conf /etc/httpd/vhost.d/${DOMAIN}.conf
+    fi
 }
