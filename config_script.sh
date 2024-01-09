@@ -82,12 +82,40 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 
 	elif [ "${CONFIG_MENU}" == "SSL/TLS" ]; then
 		#nejdrive menu jestli chce vztvorit certifikat nebo jestli ma vlastni, pak pokud bude chtit vyotvorit certifikat tak se ulozi do /etc/httpd/ssl pokud chce vlastni certifakt tak zada cestu k tomu certifikatu (mohu vyzkouset ze svuj certifikat dam na random misto)
+		#pak se musi nejak to ssl zapsat do toho vhostu, bude template "vhost_ssl_template" kde bude jen to samotne zapnuti ssl a nastaveni cesty k certifikatu
 		ssl_menu
 
 		if [ "${SSL_MENU}" == "<-- BACK" ]; then
 			main_menu
 		elif [ "${SSL_MENU}" == "SELFSIGNED" ]; then
-			echo "selfsinged"
+			input "Create SSL/TLS certificate" "Input the domain"
+			input_data "DOMAIN"
+
+			if [ ! -e "/root/cert" ]; then
+				mkdir /root/cert
+			fi
+			if [ ! -e "/etc/httpd/ssl" ]; then
+				mkdir /etc/httpd/ssl
+			fi
+
+			openssl genrsa 2048 > /root/cert/ca.key
+			openssl req -new -x509 -nodes -days 3650 -key /root/cert/ca.key -out /root/cert/ca.crt
+
+			if [ -e /root/cert/serial.txt ]; then
+				SERIAL=$(cat /root/cert/serial.txt)
+				SERIAL=$((SERIAL+1))
+			else
+				SERIAL=1
+			fi
+
+			openssl req -newkey rsa:2048 -nodes -subj "/C=CZ/ST=Czech Republic/L=Prague/CN=${DOMAIN}" -keyout /root/cert/${DOMAIN}.key -out /root/cert/${DOMAIN}-req.crt
+			openssl x509 -req -in /root/cert/${DOMAIN}-req.crt -days 365 -CA /root/cert/ca.crt -CAkey /root/cert/ca.key -set_serial ${SERIAL} -out /root/cert/${DOMAIN}.crt
+			
+			cp -f /root/cert/${DOMAIN}.crt /etc/httpd/ssl/
+			cp -f /root/cert/${DOMAIN}.key /etc/httpd/ssl/
+
+			echo ${SERIAL} > /root/cert/serial.txt
+
 			exit 0
 		elif [ "${SSL_MENU}" == "OWN" ]; then
 			echo "own"
