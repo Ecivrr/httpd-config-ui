@@ -1,5 +1,5 @@
 #!/bin/bash
-. /opt/httpd_config_ui/library/common.sh
+. /opt/httpd_config_ui/library/whip.sh
 . /opt/httpd_config_ui/library/configs.sh
 
 #HTTPD_CHECK=$(dnf list --installed | grep httpd)
@@ -81,8 +81,6 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 		fi
 
 	elif [ "${CONFIG_MENU}" == "SSL/TLS" ]; then
-		#nejdrive menu jestli chce vztvorit certifikat nebo jestli ma vlastni, pak pokud bude chtit vyotvorit certifikat tak se ulozi do /etc/httpd/ssl pokud chce vlastni certifakt tak zada cestu k tomu certifikatu (mohu vyzkouset ze svuj certifikat dam na random misto)
-		#pak se musi nejak to ssl zapsat do toho vhostu, bude template "vhost_ssl_template" kde bude jen to samotne zapnuti ssl a nastaveni cesty k certifikatu
 		ssl_menu
 
 		if [ "${SSL_MENU}" == "<-- BACK" ]; then
@@ -91,30 +89,52 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 			input "Create SSL/TLS certificate" "Input the domain"
 			input_data "DOMAIN"
 
-			if [ ! -e "/root/cert" ]; then
-				mkdir /root/cert
-			fi
-			if [ ! -e "/etc/httpd/ssl" ]; then
-				mkdir /etc/httpd/ssl
-			fi
+			if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
+				if [ ! -e "/root/cert" ]; then
+					mkdir /root/cert
+				fi
+				if [ ! -e "/etc/httpd/ssl" ]; then
+					mkdir /etc/httpd/ssl
+				fi
 
-			openssl genrsa 2048 > /root/cert/ca.key
-			openssl req -new -x509 -nodes -days 3650 -key /root/cert/ca.key -out /root/cert/ca.crt
+				if [ ! -e "/root/cert/ca.key" ] && [ ! -e "/root/cert/ca.crt" ]; then
+					openssl genrsa 2048 > /root/cert/ca.key
+					openssl req -new -x509 -nodes -subj "/C=CZ/ST=Czech Republic/L=Prague/CN=${DOMAIN}" -days 3650 -key /root/cert/ca.key -out /root/cert/ca.crt
+				fi
 
-			if [ -e /root/cert/serial.txt ]; then
-				SERIAL=$(cat /root/cert/serial.txt)
-				SERIAL=$((SERIAL+1))
+				if [ -e /root/cert/serial.txt ]; then
+					SERIAL=$(cat /root/cert/serial.txt)
+					SERIAL=$((SERIAL+1))
+				else
+					SERIAL=1
+				fi
+
+				if [ -e "/etc/httpd/ssl/${DOMAIN}.crt" ] && [ -e "/etc/httpd/ssl/${DOMAIN}.key" ]; then
+					mv /etc/httpd/ssl/${DOMAIN}.crt /etc/httpd/ssl/${DOMAIN}.crt.old
+					mv /etc/httpd/ssl/${DOMAIN}.key /etc/httpd/ssl/${DOMAIN}.key.old
+					rm -f /root/cert/${DOMAIN}.crt
+					rm -f /root/cert/${DOMAIN}.key
+					rm -f /root/cert/${DOMAIN}-req.crt
+					cert_gen
+				else
+					cert_gen
+				fi
+
+				cp -f /root/cert/${DOMAIN}.crt /etc/httpd/ssl/
+				cp -f /root/cert/${DOMAIN}.key /etc/httpd/ssl/
+
+				echo ${SERIAL} > /root/cert/serial.txt
+
+				if ! grep -q "SSLEngine on" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+					cp /opt/httpd_config_ui/templates/vhost_ssl_template /tmp/vhost_ssl_template
+					sed -i "s/_DOMAIN_/${DOMAIN}/g" /tmp/vhost_ssl_template
+					sed -i "33r /tmp/vhost_ssl_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+					rm -f /tmp/vhost_ssl_template
+				fi
 			else
-				SERIAL=1
+				echo "DOMAIN DOES NOT EXIST"
+				exit 0
 			fi
-
-			openssl req -newkey rsa:2048 -nodes -subj "/C=CZ/ST=Czech Republic/L=Prague/CN=${DOMAIN}" -keyout /root/cert/${DOMAIN}.key -out /root/cert/${DOMAIN}-req.crt
-			openssl x509 -req -in /root/cert/${DOMAIN}-req.crt -days 365 -CA /root/cert/ca.crt -CAkey /root/cert/ca.key -set_serial ${SERIAL} -out /root/cert/${DOMAIN}.crt
-			
-			cp -f /root/cert/${DOMAIN}.crt /etc/httpd/ssl/
-			cp -f /root/cert/${DOMAIN}.key /etc/httpd/ssl/
-
-			echo ${SERIAL} > /root/cert/serial.txt
 
 			exit 0
 		elif [ "${SSL_MENU}" == "OWN" ]; then

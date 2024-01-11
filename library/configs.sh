@@ -25,8 +25,11 @@ vhost_sed(){
     cp /opt/httpd_config_ui/templates/vhost_template /tmp/${DOMAIN}.conf
     sed -i "s/_DOMAIN_/${DOMAIN}/g" /tmp/${DOMAIN}.conf
     sed -i "s/_ADMINEMAIL_/${ADMINEMAIL}/g" /tmp/${DOMAIN}.conf
-    #sed -i "1s/^/This is your ${DOMAIN} Virtual host\n/" /var/www/vhost/${DOMAIN}/docroot/index.html
     echo "This is your ${DOMAIN} Virtual host" > /var/www/vhost/${DOMAIN}/docroot/index.html
 
     eval_diff "/etc/httpd/vhost.d/${DOMAIN}.conf" "/tmp/${DOMAIN}.conf"
+}
+cert_gen() {
+    openssl req -newkey rsa:2048 -nodes -subj "/C=CZ/ST=Czech Republic/L=Prague/CN=${DOMAIN}" -keyout /root/cert/${DOMAIN}.key -out /root/cert/${DOMAIN}-req.crt
+	openssl x509 -req -in /root/cert/${DOMAIN}-req.crt -days 365 -CA /root/cert/ca.crt -CAkey /root/cert/ca.key -set_serial ${SERIAL} -out /root/cert/${DOMAIN}.crt
 }
