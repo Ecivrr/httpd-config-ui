@@ -59,7 +59,7 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 			vhost_sed
 			exit 0
 		elif [ "${VHOST_MENU}" == "REMOVE" ]; then
-			input "Remove a virtual host" "Input the domain of the virtual host"
+			input "Remove a virtual host" "Input the domain of the virtual host."
 			input_data "DOMAIN"
 			
 			if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
@@ -86,7 +86,7 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 		if [ "${SSL_MENU}" == "<-- BACK" ]; then
 			main_menu
 		elif [ "${SSL_MENU}" == "SELFSIGNED" ]; then
-			input "Create SSL/TLS certificate" "Input the domain"
+			input "Create SSL/TLS certificate" "Input the domain."
 			input_data "DOMAIN"
 
 			if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
@@ -112,9 +112,11 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 				if [ -e "/etc/httpd/ssl/${DOMAIN}.crt" ] && [ -e "/etc/httpd/ssl/${DOMAIN}.key" ]; then
 					mv /etc/httpd/ssl/${DOMAIN}.crt /etc/httpd/ssl/${DOMAIN}.crt.old
 					mv /etc/httpd/ssl/${DOMAIN}.key /etc/httpd/ssl/${DOMAIN}.key.old
+
 					rm -f /root/cert/${DOMAIN}.crt
 					rm -f /root/cert/${DOMAIN}.key
 					rm -f /root/cert/${DOMAIN}-req.crt
+
 					cert_gen
 				else
 					cert_gen
@@ -125,7 +127,6 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 
 				echo ${SERIAL} > /root/cert/serial.txt
 
-				#if ! grep -q "SSLEngine on" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
 				if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
 					sed -i "34,37d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
 					ssl_template
@@ -144,7 +145,7 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 			fi
 
 			if whiptail --title "Certificate directory" --yesno "Is your certificate saved in the '/etc/httpd/ssl/' directory?" 10 78; then
-				input "Include your own certificate" "Input the domain which the certificate is for"
+				input "Include your own certificate" "Input the domain which the certificate is for."
 				input_data "DOMAIN"
 
 				if [ ! -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
@@ -152,10 +153,10 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 					exit 0
 				fi
 
-				input "Include your own certificate" "Input the whole certificate name"
+				input "Include your own certificate" "Input the whole certificate name."
 				input_data "CRT"
 
-				input "Include your own certificate" "Input the whole key name"
+				input "Include your own certificate" "Input the whole key name."
 				input_data "KEY"
 
 				if [ -e "/etc/httpd/ssl/${CRT}" ] && [ -e "/etc/httpd/ssl/${KEY}" ]; then
@@ -181,7 +182,16 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 			exit 0
 		fi
 	elif [ "${CONFIG_MENU}" == "AUTHENTICATION" ]; then
-		echo "authentication"
+		if [ ! -e "/etc/httpd/passwords" ]; then
+			mkdir /etc/httpd/passwords
+			touch /etc/httpd/passwords/passwd
+		fi
+
+		input "Enable authentication" "Input the domain you wish to enable authentication for."
+		input_data "DOMAIN"
+
+		#nejprve kopirovat kpirovat z templatu a potom se zeptat na uzivatelske jmeno a potom se spusti tem command a uz ho to vyhodi a on zada heslo
+
 		exit 0
 	else
 		EXITSTATUS="exit"

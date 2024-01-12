@@ -1,5 +1,4 @@
 eval_diff(){
-
     if [ -e "${1}" ]; then
         DIFF=$(diff "${2}" "${1}")
         if [ "${DIFF}" ]; then
