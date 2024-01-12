@@ -1,0 +1,4 @@
+    SSLEngine on
+    SSLCertificateFile /etc/httpd/ssl/_CRT_
+    SSLCertificateKeyFile /etc/httpd/ssl/_KEY_
+

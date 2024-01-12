@@ -33,3 +33,16 @@ cert_gen() {
     openssl req -newkey rsa:2048 -nodes -subj "/C=CZ/ST=Czech Republic/L=Prague/CN=${DOMAIN}" -keyout /root/cert/${DOMAIN}.key -out /root/cert/${DOMAIN}-req.crt
 	openssl x509 -req -in /root/cert/${DOMAIN}-req.crt -days 365 -CA /root/cert/ca.crt -CAkey /root/cert/ca.key -set_serial ${SERIAL} -out /root/cert/${DOMAIN}.crt
 }
+ssl_template() {
+    cp /opt/httpd_config_ui/templates/vhost_ssl_template /tmp/vhost_ssl_template
+	sed -i "s/_DOMAIN_/${DOMAIN}/g" /tmp/vhost_ssl_template
+	sed -i "33r /tmp/vhost_ssl_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+	rm -f /tmp/vhost_ssl_template
+}
+own_ssl_template() {
+    cp /opt/httpd_config_ui/templates/vhost_own_ssl_template /tmp/vhost_own_ssl_template
+	sed -i "s/_CRT_/${CRT}/g" /tmp/vhost_own_ssl_template
+	sed -i "s/_KEY_/${KEY}/g" /tmp/vhost_own_ssl_template
+	sed -i "33r /tmp/vhost_own_ssl_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+	rm -f /tmp/vhost_own_ssl_template
+}

@@ -125,11 +125,12 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 
 				echo ${SERIAL} > /root/cert/serial.txt
 
-				if ! grep -q "SSLEngine on" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
-					cp /opt/httpd_config_ui/templates/vhost_ssl_template /tmp/vhost_ssl_template
-					sed -i "s/_DOMAIN_/${DOMAIN}/g" /tmp/vhost_ssl_template
-					sed -i "33r /tmp/vhost_ssl_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
-					rm -f /tmp/vhost_ssl_template
+				#if ! grep -q "SSLEngine on" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+				if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+					sed -i "34,37d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+					ssl_template
+				else
+					ssl_template
 				fi
 			else
 				echo "DOMAIN DOES NOT EXIST"
@@ -141,7 +142,8 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 			if [ ! -e "/etc/httpd/ssl" ]; then
 				mkdir /etc/httpd/ssl
 			fi
-			if whiptail --title "Certificate directory" --yesno "Is your certificate saved in the '/etc/httpd/ssl/' directory?"; then
+
+			if whiptail --title "Certificate directory" --yesno "Is your certificate saved in the '/etc/httpd/ssl/' directory?" 10 78; then
 				input "Include your own certificate" "Input the domain which the certificate is for"
 				input_data "DOMAIN"
 
@@ -156,10 +158,15 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 				input "Include your own certificate" "Input the whole key name"
 				input_data "KEY"
 
-				if [ -e "/etc/httpd/ssl/${CRT}" ] && [ -e "/etc/httpd/ssl/${KEY}"]; then
-					#sed na vhost template
+				if [ -e "/etc/httpd/ssl/${CRT}" ] && [ -e "/etc/httpd/ssl/${KEY}" ]; then
+					if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+						sed -i "34,37d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+						own_ssl_template
+					else
+						own_ssl_template
+					fi
 				else
-					#echo ze neexistujou
+					echo "CERTIFICATE DOES NOT EXIST"
 				fi
 				exit 0
 
