@@ -110,6 +110,9 @@
 #				echo "domain doesnt exist"
 #				exti 0
 #			fi
-if ! grep -q "SSLEngine on" "/etc/httpd/vhost.d/fifth.com.conf"; then
-	echo "string doesnt exist"
-fi
+#if ! grep -q "SSLEngine on" "/etc/httpd/vhost.d/fifth.com.conf"; then
+#	echo "string doesnt exist"
+#fi
+#. /opt/httpd_config_ui/library/whip.sh
+
+#msg "test" "test"

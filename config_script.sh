@@ -138,7 +138,35 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 
 			exit 0
 		elif [ "${SSL_MENU}" == "OWN" ]; then
-			echo "own"
+			if [ ! -e "/etc/httpd/ssl" ]; then
+				mkdir /etc/httpd/ssl
+			fi
+			if whiptail --title "Certificate directory" --yesno "Is your certificate saved in the '/etc/httpd/ssl/' directory?"; then
+				input "Include your own certificate" "Input the domain which the certificate is for"
+				input_data "DOMAIN"
+
+				if [ ! -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
+					echo "THIS DOMAIN DOES NOT EXIST"
+					exit 0
+				fi
+
+				input "Include your own certificate" "Input the whole certificate name"
+				input_data "CRT"
+
+				input "Include your own certificate" "Input the whole key name"
+				input_data "KEY"
+
+				if [ -e "/etc/httpd/ssl/${CRT}" ] && [ -e "/etc/httpd/ssl/${KEY}"]; then
+					#sed na vhost template
+				else
+					#echo ze neexistujou
+				fi
+				exit 0
+
+			else
+				msg "Certificate directory" "Please SAVE YOUR certificate in the '/etc/httpd/ssl/' directory."
+			fi
+
 			exit 0
 		else
 			EXITSTATUS="exit"
