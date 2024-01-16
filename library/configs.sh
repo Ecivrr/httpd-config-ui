@@ -45,3 +45,7 @@ own_ssl_template() {
 	sed -i "33r /tmp/vhost_own_ssl_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
 	rm -f /tmp/vhost_own_ssl_template
 }
+auth_template() {
+    sed -i "26r /opt/httpd_config_ui/templates/auth_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+    sed -i "64r /opt/httpd_config_ui/templates/auth_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+}

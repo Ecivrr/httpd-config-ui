@@ -22,6 +22,7 @@
 
         Order allow,deny
         Allow from all
+
     </Directory>
 
     Redirect permanent / https://www._DOMAIN_
@@ -50,5 +51,6 @@
 
         Order allow,deny
         Allow from all
+        
     </Directory>
 </VirtualHost>

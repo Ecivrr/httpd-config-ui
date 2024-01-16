@@ -187,11 +187,42 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 			touch /etc/httpd/passwords/passwd
 		fi
 
-		input "Enable authentication" "Input the domain you wish to enable authentication for."
-		input_data "DOMAIN"
+		auth_menu
 
-		#nejprve kopirovat kpirovat z templatu a potom se zeptat na uzivatelske jmeno a potom se spusti tem command a uz ho to vyhodi a on zada heslo
+		if [ "${AUTH_MENU}" == "<-- BACK" ]; then
+			main_menu
+		elif [ "${AUTH_MENU}" == "ENABLE" ]; then
+			input "Enable authentication" "Input the domain you wish to enable authentication for."
+			input_data "DOMAIN"
 
+			if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
+				if grep -q "AuthType" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+					echo "AUTHENTICATION ALREADY ENABLED"
+					exit 0
+				else
+					if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+						auth_template
+						exit 0
+					else
+						echo "SSL MUST BE ENABLED"
+						exit 0
+					fi
+				fi
+			else
+				echo "DOMAIN DOES NOT EXIST"
+				exit 0
+			fi
+		elif [ "${AUTH_MENU}" == "DISABLE" ]; then
+			#kontrola jesli je opravdu zapnuto
+			#potom odstraneni radku s authentikaci
+			#sed -i "27,30d" "/etc/httpd/vhost.d/${DOMAIN}.conf
+		elif [ "${AUTH_MENU}" == "ADD USER" ]: then
+			#kontrloa jestli uz tam nahodou neni user
+			#pak pridat user
+		elif [ "${AUTH_MENU}"  == "REMOVE USER" ]; then
+			#kontrola jestli tam je
+			#potom odstranit user
+		fi	
 		exit 0
 	else
 		EXITSTATUS="exit"
