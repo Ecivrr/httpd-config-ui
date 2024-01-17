@@ -35,7 +35,7 @@ cert_gen() {
 ssl_template() {
     cp /opt/httpd_config_ui/templates/vhost_ssl_template /tmp/vhost_ssl_template
 	sed -i "s/_DOMAIN_/${DOMAIN}/g" /tmp/vhost_ssl_template
-	sed -i "33r /tmp/vhost_ssl_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+	sed -i "34r /tmp/vhost_ssl_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
 	rm -f /tmp/vhost_ssl_template
 }
 own_ssl_template() {
@@ -45,7 +45,9 @@ own_ssl_template() {
 	sed -i "33r /tmp/vhost_own_ssl_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
 	rm -f /tmp/vhost_own_ssl_template
 }
-auth_template() {
-    sed -i "26r /opt/httpd_config_ui/templates/auth_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
-    sed -i "64r /opt/httpd_config_ui/templates/auth_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+auth_enable() {
+    sed -i "25r /opt/httpd_config_ui/templates/auth_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+    sed -i "63r /opt/httpd_config_ui/templates/auth_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
 }
+#27-31
+#60-64

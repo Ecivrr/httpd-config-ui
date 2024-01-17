@@ -99,7 +99,7 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 
 				if [ ! -e "/root/cert/ca.key" ] && [ ! -e "/root/cert/ca.crt" ]; then
 					openssl genrsa 2048 > /root/cert/ca.key
-					openssl req -new -x509 -nodes -subj "/C=CZ/ST=Czech Republic/L=Prague/CN=${DOMAIN}" -days 3650 -key /root/cert/ca.key -out /root/cert/ca.crt
+					openssl req -new -x509 -nodes -subj "/C=CZ/ST=Czech Republic/L=Prague/CN=SELFSIGNED" -days 3650 -key /root/cert/ca.key -out /root/cert/ca.crt
 				fi
 
 				if [ -e /root/cert/serial.txt ]; then
@@ -201,7 +201,7 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 					exit 0
 				else
 					if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
-						auth_template
+						auth_enable
 						exit 0
 					else
 						echo "SSL MUST BE ENABLED"
@@ -213,15 +213,47 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 				exit 0
 			fi
 		elif [ "${AUTH_MENU}" == "DISABLE" ]; then
-			#kontrola jesli je opravdu zapnuto
-			#potom odstraneni radku s authentikaci
-			#sed -i "27,30d" "/etc/httpd/vhost.d/${DOMAIN}.conf
-		elif [ "${AUTH_MENU}" == "ADD USER" ]: then
-			#kontrloa jestli uz tam nahodou neni user
-			#pak pridat user
+			input "Disable authentication" "Input the domain you wish to disable authentication for."
+			input_data "DOMAIN"
+
+			if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
+				if grep -q "AuthType" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+					sed -i "26,30d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+					sed -i "59,63d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+				else
+					echo "AUTHENTICATION IS ALREADY DISABLED"
+					exit 0
+				fi
+			else
+				echo "DOMAIN DOES NOT EXIST"
+				exit 0
+			fi
+		elif [ "${AUTH_MENU}" == "ADD USER" ]; then
+			input "Add user" "Input the username you want to authenticate."
+			input_data "USER"
+
+			if grep -q "${USER}" "/etc/httpd/passwords/passwd"; then
+				if whiptail --title "Add user" --yesno "User already exists, do you want to update the password?" 10 78; then
+					htpasswd /etc/httpd/passwords/passwd "${USER}"
+				else
+					echo -e "USER NOT ADDED\nABORTING"
+					exit 0
+				fi
+			else
+				htpasswd /etc/httpd/passwords/passwd "${USER}"
+			fi
+
+			exit 0
 		elif [ "${AUTH_MENU}"  == "REMOVE USER" ]; then
-			#kontrola jestli tam je
-			#potom odstranit user
+			input "Remove user" "Input the username you want to remove."
+			input_data "USER"
+
+			if grep -q "${USER}" "/etc/httpd/passwords/passwd"; then
+				htpasswd -D /etc/httpd/passwords/passwd "${USER}"
+			else
+				echo -e "USER DOES NOT EXIST\nABORTING"
+				exit 0
+			fi
 		fi	
 		exit 0
 	else
