@@ -46,8 +46,11 @@ own_ssl_template() {
 	rm -f /tmp/vhost_own_ssl_template
 }
 auth_enable() {
-    sed -i "25r /opt/httpd_config_ui/templates/auth_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
-    sed -i "63r /opt/httpd_config_ui/templates/auth_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+    cp /opt/httpd_config_ui/templates/auth_template /tmp/auth_template
+    sed -i "s/_DOMAIN_/${DOMAIN}/g" /tmp/auth_template
+    sed -i "25r /tmp/auth_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+    sed -i "63r /tmp/auth_template" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+    rm -f /tmp/auth_template
 }
 #27-31
 #60-64

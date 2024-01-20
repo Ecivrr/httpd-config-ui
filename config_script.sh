@@ -184,7 +184,6 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 	elif [ "${CONFIG_MENU}" == "AUTHENTICATION" ]; then
 		if [ ! -e "/etc/httpd/passwords" ]; then
 			mkdir /etc/httpd/passwords
-			touch /etc/httpd/passwords/passwd
 		fi
 
 		auth_menu
@@ -229,18 +228,40 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 				exit 0
 			fi
 		elif [ "${AUTH_MENU}" == "ADD USER" ]; then
+		#udelat aby byly uzivatele separe pro virtual hosty
+			input "Add user" "Input the domain."
+
+			DIALOGSTATUS=$?
+    
+    		if [ "${DIALOGSTATUS}" != 0 ]; then
+				echo "CANCEL"
+				exit 0
+			fi
+
+			input_data "DOMAIN"
+
+			if [ ! -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
+				echo -e "DOMAIN DOES NOT EXIST\nABORTING"
+				exit 0
+			fi
+
 			input "Add user" "Input the username you want to authenticate."
 			input_data "USER"
 
-			if grep -q "${USER}" "/etc/httpd/passwords/passwd"; then
+			if [ ! -e "/etc/httpd/passwords/${DOMAIN}" ]; then
+				mkdir /etc/httpd/passwords/${DOMAIN}
+				touch /etc/httpd/passwords/${DOMAIN}/passwd
+			fi
+
+			if grep -q "${USER}" "/etc/httpd/passwords/${DOMAIN}/passwd"; then
 				if whiptail --title "Add user" --yesno "User already exists, do you want to update the password?" 10 78; then
-					htpasswd /etc/httpd/passwords/passwd "${USER}"
+					htpasswd /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
 				else
 					echo -e "USER NOT ADDED\nABORTING"
 					exit 0
 				fi
 			else
-				htpasswd /etc/httpd/passwords/passwd "${USER}"
+				htpasswd /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
 			fi
 
 			exit 0
@@ -248,8 +269,8 @@ while [ "${EXITSTATUS}" == "continue" ]; do
 			input "Remove user" "Input the username you want to remove."
 			input_data "USER"
 
-			if grep -q "${USER}" "/etc/httpd/passwords/passwd"; then
-				htpasswd -D /etc/httpd/passwords/passwd "${USER}"
+			if grep -q "${USER}" "/etc/httpd/passwords/${DOMAIN}/passwd"; then
+				htpasswd -D /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
 			else
 				echo -e "USER DOES NOT EXIST\nABORTING"
 				exit 0
