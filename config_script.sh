@@ -1,6 +1,6 @@
 #!/bin/bash
-. /opt/httpd_config_ui/library/whip.sh
-. /opt/httpd_config_ui/library/configs.sh
+. /opt/httpd-config-ui/library/whip.sh
+. /opt/httpd-config-ui/library/configs.sh
 
 #HTTPD_CHECK=$(dnf list --installed | grep httpd)
 EXITSTATUS="continue"
