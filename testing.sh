@@ -116,3 +116,31 @@
 #. /opt/httpd_config_ui/library/whip.sh
 
 #msg "test" "test"
+
+#HTTPD_CHECK=$(dnf list --installed | grep httpd)
+
+#if [ ! -z "${HTTPD_CHECK}" ]; then
+#    echo "installed"
+#fi
+
+. /opt/httpd-config-ui/library/whip.sh
+. /opt/httpd-config-ui/library/configs.sh
+
+STAT="conti"
+
+while [ "${STAT}" == "conti" ]; do
+    input "Configure the httpd.conf file" "Input specific listen IP 'address:port', or only port number."
+	if [ $? == 1 ]; then
+        break
+    fi
+    input_data2 "test1"
+
+    input "Configure the httpd.conf file" "Input the admins email."
+	if [ $? == 1 ]; then
+        break
+    fi
+    input_data2 "test2"
+done
+echo "done"
+
+#DIALOGSTATUS=$?

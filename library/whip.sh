@@ -32,7 +32,7 @@ config_menu() {
 }
 vhost_menu() {
 	VHOST_MENU=$(whiptail --title "Configure Virtual Hosts" --menu "Choose an option" 25 78 16 \
-		"<-- BACK" "Return to MAIN MENU." \
+		"<-- BACK" "Return to CONFIG MENU." \
 		"ADD" "Add a Virtual Host." \
 		"REMOVE" "Remove a Virtual Host." 3>&1 1>&2 2>&3)
 }
@@ -50,15 +50,19 @@ auth_menu() {
 		"ADD USER" "Add authenticated user for a domain." \
 		"REMOVE USER" "Remove authetnicated user for a domain." 3>&1 1>&2 2>&3 )
 }
-input_data() {
-    local variable_name="$1"
-    DIALOGSTATUS=$?
+#input_data() {
+#    local variable_name="$1"
+#    DIALOGSTATUS=$?
     
-    if [ "${DIALOGSTATUS}" = 0 ]; then
-        eval "${variable_name}=${USER_INPUT}"
-    else
-		EXITSTATUS="exit"
-        echo "EXITING"
-        exit 0
-    fi
+#    if [ "${DIALOGSTATUS}" = 0 ]; then
+#        eval "${variable_name}=${USER_INPUT}"
+#    else
+#		EXITSTATUS="exit"
+#        echo "EXITING"
+#    fi
+#}
+
+input_data() {
+	local variable_name="$1"
+	eval "${variable_name}=${USER_INPUT}"
 }

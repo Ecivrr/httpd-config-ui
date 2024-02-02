@@ -2,284 +2,343 @@
 . /opt/httpd-config-ui/library/whip.sh
 . /opt/httpd-config-ui/library/configs.sh
 
-#HTTPD_CHECK=$(dnf list --installed | grep httpd)
-EXITSTATUS="continue"
-main_menu
+EXITSTATUS="main"
 
-while [ "${EXITSTATUS}" == "continue" ]; do
+while [ "${EXITSTATUS}" == "main" ]; do
+	main_menu
+
 	if [ "${MAIN_MENU}" == "CONFIGURE" ]; then
-		config_menu
+		EXITSTATUS="config"
 	elif [ "${MAIN_MENU}" == "INSTALL" ]; then
-		echo "install"
-		exit 0
+		HTTPD_CHECK=$(dnf list --installed | grep httpd)
+
+		if [ -z "${HTTPD_CHECK}" ]; then
+    		dnf install httpd mod_ssl
+		else
+			msg "INSTALL" "HTTPD IS ALREADY INSTALLED"
+		fi
 	elif [ "${MAIN_MENU}" == "HELP" ]; then
 		echo "help"
-		exit 0
 	else
 		EXITSTATUS="exit"
-		echo "EXITING"
-		exit 0
 	fi
+	
+	while [ "${EXITSTATUS}" == "config" ]; do
+		config_menu
 
-	if [ "${CONFIG_MENU}" == "<-- BACK" ]; then
-		main_menu
-	elif [ "${CONFIG_MENU}" == "HTTPD" ]; then
-		input "Configure the httpd.conf file" "Input specific listen IP 'address:port', or only port number."
-		input_data "LISTENIP"
+		if [ "${CONFIG_MENU}" == "<-- BACK" ]; then
+			EXITSTATUS="main"
+			break
+		elif [ "${CONFIG_MENU}" == "HTTPD" ]; then
+			EXITSTATUS="httpd"
 
-		input "Configure the httpd.conf file" "Input the admins email."
-		input_data "ADMINEMAIL"
+			while [ "${EXITSTATUS}" == "httpd" ]; do
+				input "Configure the httpd.conf file" "Input specific listen IP 'address:port', or only port number."
+				if [ $? == 1 ]; then
+					EXITSTATUS="config"
+    		    	break
+    			fi
+				input_data "LISTENIP"
 
-		input "Configure the httpd.conf file" "Input the server name or IP address."
-		input_data "SERVERNAME"
+				input "Configure the httpd.conf file" "Input the admins email."
+				if [ $? == 1 ]; then
+					EXITSTATUS="config"
+    		    	break
+    			fi
+				input_data "ADMINEMAIL"
 
-		httpd_sed
-		exit 0
+				input "Configure the httpd.conf file" "Input the server name or IP address."
+				if [ $? == 1 ]; then
+					EXITSTATUS="config"
+    		  	  break
+    			fi
+				input_data "SERVERNAME"
 
-	elif [ "${CONFIG_MENU}" == "VIRTUAL HOSTS" ]; then
-		if [ ! -e "/etc/httpd/vhost.d" ]; then
-			mkdir "/etc/httpd/vhost.d"
-		fi
-		vhost_menu
+				httpd_sed
 
-		if [ "${VHOST_MENU}" == "<-- BACK" ]; then
-			main_menu
-		elif [ "${VHOST_MENU}" == "ADD" ]; then
-			input "Add a virtual host" "Input the domain."
-			input_data "DOMAIN"
+				EXITSTATUS="config"
+				break
+			done
 
-			input "Add a virtual host" "Input the admins email."
-			input_data "ADMINEMAIL"
-
-			if [ ! -e "/var/www/vhost/${DOMAIN}" ]; then
-				mkdir -p /var/www/vhost/${DOMAIN}/docroot
-				touch /var/www/vhost/${DOMAIN}/docroot/index.html
+		elif [ "${CONFIG_MENU}" == "VIRTUAL HOSTS" ]; then
+			if [ ! -e "/etc/httpd/vhost.d" ]; then
+				mkdir "/etc/httpd/vhost.d"
 			fi
 
-			vhost_sed
-			exit 0
-		elif [ "${VHOST_MENU}" == "REMOVE" ]; then
-			input "Remove a virtual host" "Input the domain of the virtual host."
-			input_data "DOMAIN"
+			EXITSTATUS="vhost"
+
+			while [ "${EXITSTATUS}" == "vhost" ]; do
+				vhost_menu
+
+				if [ "${VHOST_MENU}" == "<-- BACK" ]; then
+					EXITSTATUS="config"
+					break
+				elif [ "${VHOST_MENU}" == "ADD" ]; then
+					EXITSTATUS="add"
+
+					while [ "${EXITSTATUS}" == "add" ]; do
+						input "Add a virtual host" "Input the domain."
+						if [ $? == 1 ]; then
+							EXITSTATUS="vhost"
+    		    			break
+    					fi
+						input_data "DOMAIN"
+
+						input "Add a virtual host" "Input the admins email."
+						if [ $? == 1 ]; then
+							EXITSTATUS="vhost"
+    		    			break
+    					fi					
+						input_data "ADMINEMAIL"
+
+						if [ ! -e "/var/www/vhost/${DOMAIN}" ]; then
+							mkdir -p /var/www/vhost/${DOMAIN}/docroot
+							touch /var/www/vhost/${DOMAIN}/docroot/index.html
+						fi
+						vhost_sed
+
+						EXITSTATUS="vhost"
+						break
+					done
+
+				elif [ "${VHOST_MENU}" == "REMOVE" ]; then
+					EXITSTATUS="rm"
+
+					while [ "${EXITSTATUS}" == "rm" ]; do
+						input "Remove a virtual host" "Input the domain of the virtual host."
+						if [ $? == 1 ]; then
+							EXITSTATUS="vhost"
+    		    			break
+    					fi						
+						input_data "DOMAIN"
 			
-			if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
-				if whiptail --title "Remove a virtual host" --yesno "Are you sure you want to remove ${DOMAIN}?" 10 78; then
-					rm -f /etc/httpd/vhost.d/${DOMAIN}.conf*
-					rm -rf /var/www/vhost/${DOMAIN}
+						if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
+							if whiptail --title "Remove a virtual host" --yesno "Are you sure you want to remove ${DOMAIN}?" 10 78; then
+								rm -f /etc/httpd/vhost.d/${DOMAIN}.conf*
+								rm -rf /var/www/vhost/${DOMAIN}
+
+								EXITSTATUS="vhost"
+								break
+							else
+								msg "DON'T REMOVE" "Virtual Host not removed."
+
+								EXITSTATUS="vhost"
+								break
+							fi
+						else
+							msg "DOESN'T EXIST" "Virtual Host does not exist."
+
+							EXITSTATUS="vhost"
+							break
+						fi
+
+					done
 				else
-					echo "DON'T REMOVE VIRTUAL HOST, ABORTING"
+					EXITSTATUS="exit"
+					break
 				fi
-			else
-				echo "VIRTUAL HOST DOESN'T EXIST"
-			fi
+			done
 
-			exit 0
-		else
-			EXITSTATUS="exit"
-			echo "EXITING"
-			exit 0
-		fi
+		elif [ "${CONFIG_MENU}" == "SSL/TLS" ]; then
+			ssl_menu
 
-	elif [ "${CONFIG_MENU}" == "SSL/TLS" ]; then
-		ssl_menu
+			if [ "${SSL_MENU}" == "<-- BACK" ]; then
+				main_menu
+			elif [ "${SSL_MENU}" == "SELFSIGNED" ]; then
+				input "Create SSL/TLS certificate" "Input the domain."
+				input_data "DOMAIN"
 
-		if [ "${SSL_MENU}" == "<-- BACK" ]; then
-			main_menu
-		elif [ "${SSL_MENU}" == "SELFSIGNED" ]; then
-			input "Create SSL/TLS certificate" "Input the domain."
-			input_data "DOMAIN"
+				if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
+					if [ ! -e "/root/cert" ]; then
+						mkdir /root/cert
+					fi
+					if [ ! -e "/etc/httpd/ssl" ]; then
+						mkdir /etc/httpd/ssl
+					fi
 
-			if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
-				if [ ! -e "/root/cert" ]; then
-					mkdir /root/cert
+					if [ ! -e "/root/cert/ca.key" ] && [ ! -e "/root/cert/ca.crt" ]; then
+						openssl genrsa 2048 > /root/cert/ca.key
+						openssl req -new -x509 -nodes -subj "/C=CZ/ST=Czech Republic/L=Prague/CN=SELFSIGNED" -days 3650 -key /root/cert/ca.key -out /root/cert/ca.crt
+					fi
+
+					if [ -e /root/cert/serial.txt ]; then
+						SERIAL=$(cat /root/cert/serial.txt)
+						SERIAL=$((SERIAL+1))
+					else
+						SERIAL=1
+					fi
+
+					if [ -e "/etc/httpd/ssl/${DOMAIN}.crt" ] && [ -e "/etc/httpd/ssl/${DOMAIN}.key" ]; then
+						mv /etc/httpd/ssl/${DOMAIN}.crt /etc/httpd/ssl/${DOMAIN}.crt.old
+						mv /etc/httpd/ssl/${DOMAIN}.key /etc/httpd/ssl/${DOMAIN}.key.old
+
+						rm -f /root/cert/${DOMAIN}.crt
+						rm -f /root/cert/${DOMAIN}.key
+						rm -f /root/cert/${DOMAIN}-req.crt
+
+						cert_gen
+					else
+						cert_gen
+					fi
+
+					cp -f /root/cert/${DOMAIN}.crt /etc/httpd/ssl/
+					cp -f /root/cert/${DOMAIN}.key /etc/httpd/ssl/
+
+					echo ${SERIAL} > /root/cert/serial.txt
+
+					if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+						sed -i "34,37d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+						ssl_template
+					else
+						ssl_template
+					fi
+				else
+					echo "DOMAIN DOES NOT EXIST"
+					exit 0
 				fi
+
+				exit 0
+			elif [ "${SSL_MENU}" == "OWN" ]; then
 				if [ ! -e "/etc/httpd/ssl" ]; then
 					mkdir /etc/httpd/ssl
 				fi
 
-				if [ ! -e "/root/cert/ca.key" ] && [ ! -e "/root/cert/ca.crt" ]; then
-					openssl genrsa 2048 > /root/cert/ca.key
-					openssl req -new -x509 -nodes -subj "/C=CZ/ST=Czech Republic/L=Prague/CN=SELFSIGNED" -days 3650 -key /root/cert/ca.key -out /root/cert/ca.crt
-				fi
+				if whiptail --title "Certificate directory" --yesno "Is your certificate saved in the '/etc/httpd/ssl/' directory?" 10 78; then
+					input "Include your own certificate" "Input the domain which the certificate is for."
+					input_data "DOMAIN"
 
-				if [ -e /root/cert/serial.txt ]; then
-					SERIAL=$(cat /root/cert/serial.txt)
-					SERIAL=$((SERIAL+1))
+					if [ ! -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
+						echo "THIS DOMAIN DOES NOT EXIST"
+						exit 0
+					fi
+
+					input "Include your own certificate" "Input the whole certificate name."
+					input_data "CRT"
+
+					input "Include your own certificate" "Input the whole key name."
+					input_data "KEY"
+
+					if [ -e "/etc/httpd/ssl/${CRT}" ] && [ -e "/etc/httpd/ssl/${KEY}" ]; then
+						if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+							sed -i "34,37d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+							own_ssl_template
+						else
+							own_ssl_template
+						fi
+					else
+						echo "CERTIFICATE DOES NOT EXIST"
+					fi
+					exit 0
+
 				else
-					SERIAL=1
+					msg "Certificate directory" "Please SAVE YOUR certificate in the '/etc/httpd/ssl/' directory."
 				fi
 
-				if [ -e "/etc/httpd/ssl/${DOMAIN}.crt" ] && [ -e "/etc/httpd/ssl/${DOMAIN}.key" ]; then
-					mv /etc/httpd/ssl/${DOMAIN}.crt /etc/httpd/ssl/${DOMAIN}.crt.old
-					mv /etc/httpd/ssl/${DOMAIN}.key /etc/httpd/ssl/${DOMAIN}.key.old
-
-					rm -f /root/cert/${DOMAIN}.crt
-					rm -f /root/cert/${DOMAIN}.key
-					rm -f /root/cert/${DOMAIN}-req.crt
-
-					cert_gen
-				else
-					cert_gen
-				fi
-
-				cp -f /root/cert/${DOMAIN}.crt /etc/httpd/ssl/
-				cp -f /root/cert/${DOMAIN}.key /etc/httpd/ssl/
-
-				echo ${SERIAL} > /root/cert/serial.txt
-
-				if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
-					sed -i "34,37d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
-					ssl_template
-				else
-					ssl_template
-				fi
+				exit 0
 			else
-				echo "DOMAIN DOES NOT EXIST"
+				EXITSTATUS="exit"
+				echo "EXITING"
 				exit 0
 			fi
-
-			exit 0
-		elif [ "${SSL_MENU}" == "OWN" ]; then
-			if [ ! -e "/etc/httpd/ssl" ]; then
-				mkdir /etc/httpd/ssl
+		elif [ "${CONFIG_MENU}" == "AUTHENTICATION" ]; then
+			if [ ! -e "/etc/httpd/passwords" ]; then
+				mkdir /etc/httpd/passwords
 			fi
 
-			if whiptail --title "Certificate directory" --yesno "Is your certificate saved in the '/etc/httpd/ssl/' directory?" 10 78; then
-				input "Include your own certificate" "Input the domain which the certificate is for."
+			auth_menu
+
+			if [ "${AUTH_MENU}" == "<-- BACK" ]; then
+				main_menu
+			elif [ "${AUTH_MENU}" == "ENABLE" ]; then
+				input "Enable authentication" "Input the domain you wish to enable authentication for."
 				input_data "DOMAIN"
 
-				if [ ! -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
-					echo "THIS DOMAIN DOES NOT EXIST"
+				if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
+					if grep -q "AuthType" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+						echo "AUTHENTICATION ALREADY ENABLED"
+						exit 0
+					else
+						if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+							auth_enable
+							exit 0
+						else
+							echo "SSL MUST BE ENABLED"
+							exit 0
+						fi
+					fi
+				else
+					echo "DOMAIN DOES NOT EXIST"
+					exit 0
+				fi
+			elif [ "${AUTH_MENU}" == "DISABLE" ]; then
+				input "Disable authentication" "Input the domain you wish to disable authentication for."
+				input_data "DOMAIN"
+
+				if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
+					if grep -q "AuthType" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+						sed -i "26,30d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+						sed -i "59,63d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+					else
+						echo "AUTHENTICATION IS ALREADY DISABLED"
+						exit 0
+					fi
+				else
+					echo "DOMAIN DOES NOT EXIST"
+					exit 0
+				fi
+			elif [ "${AUTH_MENU}" == "ADD USER" ]; then
+			#udelat aby byly uzivatele separe pro virtual hosty
+				input "Add user" "Input the domain."
+
+				DIALOGSTATUS=$?
+		
+				if [ "${DIALOGSTATUS}" != 0 ]; then
+					echo "CANCEL"
 					exit 0
 				fi
 
-				input "Include your own certificate" "Input the whole certificate name."
-				input_data "CRT"
+				input_data "DOMAIN"
 
-				input "Include your own certificate" "Input the whole key name."
-				input_data "KEY"
+				if [ ! -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
+					echo -e "DOMAIN DOES NOT EXIST\nABORTING"
+					exit 0
+				fi
 
-				if [ -e "/etc/httpd/ssl/${CRT}" ] && [ -e "/etc/httpd/ssl/${KEY}" ]; then
-					if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
-						sed -i "34,37d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
-						own_ssl_template
+				input "Add user" "Input the username you want to authenticate."
+				input_data "USER"
+
+				if [ ! -e "/etc/httpd/passwords/${DOMAIN}" ]; then
+					mkdir /etc/httpd/passwords/${DOMAIN}
+					touch /etc/httpd/passwords/${DOMAIN}/passwd
+				fi
+
+				if grep -q "${USER}" "/etc/httpd/passwords/${DOMAIN}/passwd"; then
+					if whiptail --title "Add user" --yesno "User already exists, do you want to update the password?" 10 78; then
+						htpasswd /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
 					else
-						own_ssl_template
+						echo -e "USER NOT ADDED\nABORTING"
+						exit 0
 					fi
 				else
-					echo "CERTIFICATE DOES NOT EXIST"
+					htpasswd /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
 				fi
+
 				exit 0
+			elif [ "${AUTH_MENU}"  == "REMOVE USER" ]; then
+				input "Remove user" "Input the username you want to remove."
+				input_data "USER"
 
-			else
-				msg "Certificate directory" "Please SAVE YOUR certificate in the '/etc/httpd/ssl/' directory."
-			fi
-
+				if grep -q "${USER}" "/etc/httpd/passwords/${DOMAIN}/passwd"; then
+					htpasswd -D /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
+				else
+					echo -e "USER DOES NOT EXIST\nABORTING"
+					exit 0
+				fi
+			fi	
 			exit 0
 		else
 			EXITSTATUS="exit"
-			echo "EXITING"
-			exit 0
+			break
 		fi
-	elif [ "${CONFIG_MENU}" == "AUTHENTICATION" ]; then
-		if [ ! -e "/etc/httpd/passwords" ]; then
-			mkdir /etc/httpd/passwords
-		fi
-
-		auth_menu
-
-		if [ "${AUTH_MENU}" == "<-- BACK" ]; then
-			main_menu
-		elif [ "${AUTH_MENU}" == "ENABLE" ]; then
-			input "Enable authentication" "Input the domain you wish to enable authentication for."
-			input_data "DOMAIN"
-
-			if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
-				if grep -q "AuthType" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
-					echo "AUTHENTICATION ALREADY ENABLED"
-					exit 0
-				else
-					if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
-						auth_enable
-						exit 0
-					else
-						echo "SSL MUST BE ENABLED"
-						exit 0
-					fi
-				fi
-			else
-				echo "DOMAIN DOES NOT EXIST"
-				exit 0
-			fi
-		elif [ "${AUTH_MENU}" == "DISABLE" ]; then
-			input "Disable authentication" "Input the domain you wish to disable authentication for."
-			input_data "DOMAIN"
-
-			if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
-				if grep -q "AuthType" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
-					sed -i "26,30d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
-					sed -i "59,63d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
-				else
-					echo "AUTHENTICATION IS ALREADY DISABLED"
-					exit 0
-				fi
-			else
-				echo "DOMAIN DOES NOT EXIST"
-				exit 0
-			fi
-		elif [ "${AUTH_MENU}" == "ADD USER" ]; then
-		#udelat aby byly uzivatele separe pro virtual hosty
-			input "Add user" "Input the domain."
-
-			DIALOGSTATUS=$?
-    
-    		if [ "${DIALOGSTATUS}" != 0 ]; then
-				echo "CANCEL"
-				exit 0
-			fi
-
-			input_data "DOMAIN"
-
-			if [ ! -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
-				echo -e "DOMAIN DOES NOT EXIST\nABORTING"
-				exit 0
-			fi
-
-			input "Add user" "Input the username you want to authenticate."
-			input_data "USER"
-
-			if [ ! -e "/etc/httpd/passwords/${DOMAIN}" ]; then
-				mkdir /etc/httpd/passwords/${DOMAIN}
-				touch /etc/httpd/passwords/${DOMAIN}/passwd
-			fi
-
-			if grep -q "${USER}" "/etc/httpd/passwords/${DOMAIN}/passwd"; then
-				if whiptail --title "Add user" --yesno "User already exists, do you want to update the password?" 10 78; then
-					htpasswd /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
-				else
-					echo -e "USER NOT ADDED\nABORTING"
-					exit 0
-				fi
-			else
-				htpasswd /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
-			fi
-
-			exit 0
-		elif [ "${AUTH_MENU}"  == "REMOVE USER" ]; then
-			input "Remove user" "Input the username you want to remove."
-			input_data "USER"
-
-			if grep -q "${USER}" "/etc/httpd/passwords/${DOMAIN}/passwd"; then
-				htpasswd -D /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
-			else
-				echo -e "USER DOES NOT EXIST\nABORTING"
-				exit 0
-			fi
-		fi	
-		exit 0
-	else
-		EXITSTATUS="exit"
-		echo "EXITING"
-		exit 0
-	fi
+	done
 done
