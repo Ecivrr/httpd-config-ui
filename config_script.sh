@@ -10,13 +10,13 @@ while [ "${EXITSTATUS}" == "main" ]; do
 	if [ "${MAIN_MENU}" == "CONFIGURE" ]; then
 		EXITSTATUS="config"
 	elif [ "${MAIN_MENU}" == "INSTALL" ]; then
-		HTTPD_CHECK=$(dnf list --installed | grep httpd)
-
-		if [ -z "${HTTPD_CHECK}" ]; then
-    		dnf install httpd mod_ssl
-		else
+		if dnf list --installed | grep -q httpd && dnf list --installed | grep -q mod_ssl; then
 			msg "INSTALL" "HTTPD IS ALREADY INSTALLED"
+		else
+			dnf install httpd mod_ssl
+			msg "INSTALL SUCCESS" "httpd and mod_ssl installed successfully"
 		fi
+
 	elif [ "${MAIN_MENU}" == "HELP" ]; then
 		echo "you are hopeless"
 		EXITSTATUS="exit"
