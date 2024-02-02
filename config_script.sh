@@ -249,97 +249,104 @@ while [ "${EXITSTATUS}" == "main" ]; do
 				mkdir /etc/httpd/passwords
 			fi
 
-			auth_menu
+			EXITSTATUS="auth"
+			while [ "${EXITSTATUS}" == "auth" ]; do
+				auth_menu
 
-			if [ "${AUTH_MENU}" == "<-- BACK" ]; then
-				main_menu
-			elif [ "${AUTH_MENU}" == "ENABLE" ]; then
-				input "Enable authentication" "Input the domain you wish to enable authentication for."
-				input_data "DOMAIN"
+				if [ "${AUTH_MENU}" == "<-- BACK" ]; then
+					EXITSTATUS="config"
+					break
+				elif [ "${AUTH_MENU}" == "ENABLE" ]; then
+					input "Enable authentication" "Input the domain you wish to enable authentication for."
+					if [ $? == 1 ]; then
+						EXITSTATUS="auth"
+    		    		continue
+    				fi	
+					input_data "DOMAIN"
 
-				if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
-					if grep -q "AuthType" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
-						echo "AUTHENTICATION ALREADY ENABLED"
-						exit 0
-					else
-						if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
-							auth_enable
-							exit 0
+					if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
+						if grep -q "AuthType" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+							msg "ALREADY ENABLED" "Authentication is already enabled."
 						else
-							echo "SSL MUST BE ENABLED"
-							exit 0
+							if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+								auth_enable
+							else
+								msg "ENABLE SSL" "SSL must be anbled when enabling authentication."
+							fi
 						fi
-					fi
-				else
-					echo "DOMAIN DOES NOT EXIST"
-					exit 0
-				fi
-			elif [ "${AUTH_MENU}" == "DISABLE" ]; then
-				input "Disable authentication" "Input the domain you wish to disable authentication for."
-				input_data "DOMAIN"
-
-				if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
-					if grep -q "AuthType" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
-						sed -i "26,30d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
-						sed -i "59,63d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
 					else
-						echo "AUTHENTICATION IS ALREADY DISABLED"
-						exit 0
+						msg "DOES'T EXIST" "Domain does not exist."
 					fi
-				else
-					echo "DOMAIN DOES NOT EXIST"
-					exit 0
-				fi
-			elif [ "${AUTH_MENU}" == "ADD USER" ]; then
-			#udelat aby byly uzivatele separe pro virtual hosty
-				input "Add user" "Input the domain."
+				elif [ "${AUTH_MENU}" == "DISABLE" ]; then
+					input "Disable authentication" "Input the domain you wish to disable authentication for."
+					if [ $? == 1 ]; then
+						EXITSTATUS="auth"
+    		    		continue
+    				fi	
+					input_data "DOMAIN"
 
-				DIALOGSTATUS=$?
-		
-				if [ "${DIALOGSTATUS}" != 0 ]; then
-					echo "CANCEL"
-					exit 0
-				fi
+					if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
+						if grep -q "AuthType" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+							sed -i "26,30d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+							sed -i "59,63d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+						else
+							msg "ALREADY DISABLED" "Authentication is already disabled."
+						fi
+					else
+						msg "DOES'T EXIST" "Domain does not exist."
+					fi
+				elif [ "${AUTH_MENU}" == "ADD USER" ]; then
+					input "Add user" "Input the domain."
+					if [ $? == 1 ]; then
+						EXITSTATUS="auth"
+    		    		continue
+    				fi	
+					input_data "DOMAIN"
 
-				input_data "DOMAIN"
+					if [ ! -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
+						msg "DOES'T EXIST" "Domain does not exist."
+					fi
 
-				if [ ! -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
-					echo -e "DOMAIN DOES NOT EXIST\nABORTING"
-					exit 0
-				fi
+					input "Add user" "Input the username you want to authenticate."
+					if [ $? == 1 ]; then
+						EXITSTATUS="auth"
+    		    		continue
+    				fi	
+					input_data "USER"
 
-				input "Add user" "Input the username you want to authenticate."
-				input_data "USER"
+					if [ ! -e "/etc/httpd/passwords/${DOMAIN}" ]; then
+						mkdir /etc/httpd/passwords/${DOMAIN}
+						touch /etc/httpd/passwords/${DOMAIN}/passwd
+					fi
 
-				if [ ! -e "/etc/httpd/passwords/${DOMAIN}" ]; then
-					mkdir /etc/httpd/passwords/${DOMAIN}
-					touch /etc/httpd/passwords/${DOMAIN}/passwd
-				fi
-
-				if grep -q "${USER}" "/etc/httpd/passwords/${DOMAIN}/passwd"; then
-					if whiptail --title "Add user" --yesno "User already exists, do you want to update the password?" 10 78; then
+					if grep -q "${USER}" "/etc/httpd/passwords/${DOMAIN}/passwd"; then
+						if whiptail --title "Add user" --yesno "User already exists, do you want to update the password?" 10 78; then
+							htpasswd /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
+						else
+							msg "NOT UPDATED" "Password was not updated."
+						fi
+					else
 						htpasswd /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
+					fi
+
+				elif [ "${AUTH_MENU}"  == "REMOVE USER" ]; then
+					input "Remove user" "Input the username you want to remove."
+					if [ $? == 1 ]; then
+						EXITSTATUS="auth"
+    		    		continue
+    				fi	
+					input_data "USER"
+
+					if grep -q "${USER}" "/etc/httpd/passwords/${DOMAIN}/passwd"; then
+						htpasswd -D /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
 					else
-						echo -e "USER NOT ADDED\nABORTING"
-						exit 0
+						msg "DOESN'T EXIST" "User does not exist"
 					fi
 				else
-					htpasswd /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
-				fi
-
-				exit 0
-			elif [ "${AUTH_MENU}"  == "REMOVE USER" ]; then
-				input "Remove user" "Input the username you want to remove."
-				input_data "USER"
-
-				if grep -q "${USER}" "/etc/httpd/passwords/${DOMAIN}/passwd"; then
-					htpasswd -D /etc/httpd/passwords/${DOMAIN}/passwd "${USER}"
-				else
-					echo -e "USER DOES NOT EXIST\nABORTING"
-					exit 0
-				fi
-			fi	
-			exit 0
+					EXITSTATUS="exit"
+					break
+				fi	
+			done
 		else
 			EXITSTATUS="exit"
 			break
