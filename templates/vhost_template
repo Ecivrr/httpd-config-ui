@@ -25,7 +25,7 @@
 
     </Directory>
 
-    Redirect permanent / https://www._DOMAIN_
+    #Redirect permanent / https://www._DOMAIN_
 </VirtualHost>
 <VirtualHost *:443>
     ServerAdmin _ADMINEMAIL_

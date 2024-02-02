@@ -18,7 +18,8 @@ while [ "${EXITSTATUS}" == "main" ]; do
 			msg "INSTALL" "HTTPD IS ALREADY INSTALLED"
 		fi
 	elif [ "${MAIN_MENU}" == "HELP" ]; then
-		echo "help"
+		echo "you are hopeless"
+		EXITSTATUS="exit"
 	else
 		EXITSTATUS="exit"
 	fi
@@ -44,7 +45,7 @@ while [ "${EXITSTATUS}" == "main" ]; do
 			fi
 			input_data "ADMINEMAIL"
 
-			input "Configure the httpd.conf file" "Input the server name or IP address."
+			input "Configure the httpd.conf file" "Input the server name or IP address (NO MASK)."
 			if [ $? == 1 ]; then
 				EXITSTATUS="config"
 				continue
@@ -108,6 +109,59 @@ while [ "${EXITSTATUS}" == "main" ]; do
 
 						EXITSTATUS="vhost"
 					fi
+				elif [ "${VHOST_MENU}" == "HTTPS" ]; then
+					EXITSTATUS="https"
+
+					while [ "${EXITSTATUS}" == "https" ]; do
+						https_menu
+
+						if [ "${HTTPS_MENU}" == "<-- BACK" ]; then
+							EXITSTATUS="vhost"
+							continue
+						elif [ "${HTTPS_MENU}" == "ENABLE" ]; then
+							input "Enable https forcing" "Input the domain of the virtual host."
+							if [ $? == 1 ]; then
+								EXITSTATUS="https"
+								continue
+							fi						
+							input_data "DOMAIN"
+
+							if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
+								if grep -q "#" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+									sed -i 's/#Redirect/Redirect/' /etc/httpd/vhost.d/${DOMAIN}.conf
+								else
+									msg "ALREADY ENABLED" "Https forcing is already enabled."
+									EXITSTATUS="https"
+								fi
+							else
+								msg "DOESN'T EXIST" "Virtual Host does not exist."
+
+								EXITSTATUS="https"
+							fi
+						elif [ "${HTTPS_MENU}" == "DISABLE" ]; then
+							input "Disable https forcing" "Input the domain of the virtual host."
+							if [ $? == 1 ]; then
+								EXITSTATUS="https"
+								continue
+							fi						
+							input_data "DOMAIN"
+
+							if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
+								if ! grep -q "#" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
+									sed -i 's/Redirect/#Redirect/' /etc/httpd/vhost.d/${DOMAIN}.conf
+								else
+									msg "ALREADY DISABLED" "Https forcing is already disabled."
+									EXITSTATUS="https"
+								fi
+							else
+								msg "DOESN'T EXIST" "Virtual Host does not exist."
+
+								EXITSTATUS="https"
+							fi
+						else
+							EXITSTATUS="exit"
+						fi
+					done
 				else
 					EXITSTATUS="exit"
 					break
@@ -179,7 +233,7 @@ while [ "${EXITSTATUS}" == "main" ]; do
 						msg "DOESN'T EXIST" "Domain does not exist."
 
 						EXITSTATUS="ssl"
-						break
+						continue
 					fi
 
 				elif [ "${SSL_MENU}" == "OWN" ]; then
@@ -271,7 +325,7 @@ while [ "${EXITSTATUS}" == "main" ]; do
 							if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
 								auth_enable
 							else
-								msg "ENABLE SSL" "SSL must be anbled when enabling authentication."
+								msg "ENABLE SSL and HTTPS" "SSL and HTTPS forcing must be anbled when enabling authentication."
 							fi
 						fi
 					else
@@ -287,8 +341,8 @@ while [ "${EXITSTATUS}" == "main" ]; do
 
 					if [ -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ]; then
 						if grep -q "AuthType" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
-							sed -i "26,30d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
-							sed -i "59,63d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+							sed -i "26,29d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
+							sed -i "59,62d" "/etc/httpd/vhost.d/${DOMAIN}.conf"
 						else
 							msg "ALREADY DISABLED" "Authentication is already disabled."
 						fi
@@ -305,6 +359,9 @@ while [ "${EXITSTATUS}" == "main" ]; do
 
 					if [ ! -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
 						msg "DOES'T EXIST" "Domain does not exist."
+
+						EXITSTATUS="auth"
+    		    		continue
 					fi
 
 					input "Add user" "Input the username you want to authenticate."
@@ -330,6 +387,20 @@ while [ "${EXITSTATUS}" == "main" ]; do
 					fi
 
 				elif [ "${AUTH_MENU}"  == "REMOVE USER" ]; then
+					input "Remove user" "Input the domain."
+					if [ $? == 1 ]; then
+						EXITSTATUS="auth"
+    		    		continue
+    				fi	
+					input_data "DOMAIN"
+
+					if [ ! -e "/etc/httpd/vhost.d/${DOMAIN}.conf" ];then
+						msg "DOES'T EXIST" "Domain does not exist."
+
+						EXITSTATUS="auth"
+    		    		continue
+					fi
+
 					input "Remove user" "Input the username you want to remove."
 					if [ $? == 1 ]; then
 						EXITSTATUS="auth"
