@@ -325,7 +325,7 @@ while [ "${EXITSTATUS}" == "main" ]; do
 							if grep -q "SSLCertificateFile" "/etc/httpd/vhost.d/${DOMAIN}.conf"; then
 								auth_enable
 							else
-								msg "ENABLE SSL and HTTPS" "SSL and HTTPS forcing must be anbled when enabling authentication."
+								msg "ENABLE SSL and HTTPS" "SSL must be anbled when enabling authentication."
 							fi
 						fi
 					else
