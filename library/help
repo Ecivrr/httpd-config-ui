@@ -1,0 +1,9 @@
+--USEFUL DIRECTORIES--
+WEB PAGE DOCROOT --> /var/www/html/
+VIRTULA HOST WEB PAGE DOCROOT --> /var/www/vhost/DOMAIN/docroot/
+HTTPD CONFIGURATION --> /etc/httpd
+
+--USAGE--
+EDIT HTTPD CONFIGURATION --> select the HTTPD option
+EDIT EXISTING VHOST CONFIGURATION --> select the ADD option again, the configuration file will be updated
+UPDATE EXISTING USER PASSWORD --> select the ADD USER option again, then input the new password

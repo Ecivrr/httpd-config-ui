@@ -1,6 +1,7 @@
 #!/bin/bash
-if dnf list --installed | grep -q httpd && dnf list --installed | grep -q test; then
-    echo "installed"
-else
-    echo "not"
-fi
+
+BASE_DIR=$(echo $0 | sed 's/\(.*httpd-config-ui\/\).*/\1/')
+
+echo $BASE_DIR
+
+

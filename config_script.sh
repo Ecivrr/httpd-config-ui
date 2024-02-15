@@ -1,9 +1,13 @@
 #!/bin/bash
-. /opt/httpd-config-ui/library/whip.sh
-. /opt/httpd-config-ui/library/configs.sh
+BASE_DIR=$(echo $0 | sed 's/\(.*httpd-config-ui\).*/\1/')
+
+#. /opt/httpd-config-ui/library/whip.sh
+#. /opt/httpd-config-ui/library/configs.sh
+
+. "$BASE_DIR"/library/whip.sh
+. "$BASE_DIR"/library/configs.sh
 
 EXITSTATUS="main"
-
 while [ "${EXITSTATUS}" == "main" ]; do
 	main_menu
 
@@ -18,8 +22,7 @@ while [ "${EXITSTATUS}" == "main" ]; do
 		fi
 
 	elif [ "${MAIN_MENU}" == "HELP" ]; then
-		echo "you are hopeless"
-		EXITSTATUS="exit"
+		whiptail --textbox "$BASE_DIR/library/help" 25 78
 	else
 		EXITSTATUS="exit"
 	fi
