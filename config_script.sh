@@ -1,9 +1,6 @@
 #!/bin/bash
 BASE_DIR=$(echo $0 | sed 's/\(.*httpd-config-ui\).*/\1/')
 
-#. /opt/httpd-config-ui/library/whip.sh
-#. /opt/httpd-config-ui/library/configs.sh
-
 . "$BASE_DIR"/library/whip.sh
 . "$BASE_DIR"/library/configs.sh
 
@@ -17,7 +14,7 @@ while [ "${EXITSTATUS}" == "main" ]; do
 		if dnf list --installed | grep -q httpd && dnf list --installed | grep -q mod_ssl; then
 			msg "INSTALL" "HTTPD IS ALREADY INSTALLED"
 		else
-			dnf install httpd mod_ssl
+			dnf install -y httpd mod_ssl
 			msg "INSTALL SUCCESS" "httpd and mod_ssl installed successfully"
 		fi
 
