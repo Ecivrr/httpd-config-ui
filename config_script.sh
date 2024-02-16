@@ -1,8 +1,14 @@
 #!/bin/bash
 BASE_DIR=$(echo $0 | sed 's/\(.*httpd-config-ui\).*/\1/')
+USER=$(id -u)
 
 . "$BASE_DIR"/library/whip.sh
 . "$BASE_DIR"/library/configs.sh
+
+if [ "${USER}" != 0 ]; then
+    msg "RUN AS ROOT" "PLEASE RUN SCRIPT AS ROOT"
+	exit 0
+fi
 
 EXITSTATUS="main"
 while [ "${EXITSTATUS}" == "main" ]; do
@@ -15,7 +21,13 @@ while [ "${EXITSTATUS}" == "main" ]; do
 			msg "INSTALL" "HTTPD IS ALREADY INSTALLED"
 		else
 			dnf install -y httpd mod_ssl
+			sytemctl enable httpd
 			msg "INSTALL SUCCESS" "httpd and mod_ssl installed successfully"
+			if whiptail --title "FIREWALLD" --yesno "Do you want to open ports 80 and 443 in firewalld?" 10 78; then
+				firewalld-cmd --permanent --zone=public --add-port=80/tcp
+				firewalld-cmd --permanent --zone=public --add-port=443/tcp
+				systemctl restart firewalld
+			fi
 		fi
 
 	elif [ "${MAIN_MENU}" == "HELP" ]; then
