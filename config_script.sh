@@ -21,11 +21,11 @@ while [ "${EXITSTATUS}" == "main" ]; do
 			msg "INSTALL" "HTTPD IS ALREADY INSTALLED"
 		else
 			dnf install -y httpd mod_ssl
-			sytemctl enable httpd
+			systemctl enable httpd
 			msg "INSTALL SUCCESS" "httpd and mod_ssl installed successfully"
 			if whiptail --title "FIREWALLD" --yesno "Do you want to open ports 80 and 443 in firewalld?" 10 78; then
-				firewalld-cmd --permanent --zone=public --add-port=80/tcp
-				firewalld-cmd --permanent --zone=public --add-port=443/tcp
+				firewall-cmd --permanent --zone=public --add-port=80/tcp
+				firewall-cmd --permanent --zone=public --add-port=443/tcp
 				systemctl restart firewalld
 			fi
 		fi
