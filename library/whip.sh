@@ -1,4 +1,5 @@
 #!/bin/bash
+#COMMIT BEFORE SUBMISSION
 msg() {
 	whiptail --title "${1}" --msgbox "${2}" 10 78
 }

@@ -1,3 +1,5 @@
+#!/bin/bash
+#COMMIT BEFORE SUBMISSION
 BASE_DIR=$(echo $0 | sed 's/\(.*httpd-config-ui\).*/\1/')
 
 eval_diff(){
